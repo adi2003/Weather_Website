@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UrbanWeather</title>
+    <link rel="stylesheet" href="styles.css">
+    <script lang="javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+    const apiKey = '57d7112f873b34459613c72029957a10'; // Replace with your OpenWeatherMap API key
+    const geolocationButton = document.getElementById('geolocation-button');
+    const searchButton = document.getElementById('search-button');
+    const cityInput = document.getElementById('city-input');
+    const cityName = document.getElementById('city-name');
+    const description = document.getElementById('description');
+    const temperature = document.getElementById('temperature');
+    const humidity = document.getElementById('humidity');
+
+    // if enter key is pressed anytime, trigger the search button click event
+    cityInput.addEventListener('keyup', (event) => {
+        if (event.key === 'Enter') {
+            console.log('Enter key pressed');
+            searchButton.click();
+        }
+    });
+
+
+    searchButton.addEventListener('click', () => {
+        const city = cityInput.value.trim();
+        if (city) {
+            fetchWeather(city);
+        }
+    });
+
+    geolocationButton.addEventListener('click', () => {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(position => {
+                const { latitude, longitude } = position.coords;
+                fetchWeatherByCoords(latitude, longitude);
+            });
+            console.log('Geolocation button clicked: ', navigator.geolocation);
+        } else {
+            alert('Geolocation is not supported by this browser.');
+        }
+    });
+
+    function fetchWeatherByCoords(lat, lon) {
+        fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`)
+            .then(response => response.json())
+            .then(data => updateWeather(data))
+            .catch(error => {
+                alert('Error fetching weather data');
+                console.error(error);
+            });
+    }
+
+    function updateWeather(data) {
+        if (data.cod === 200) {
+            cityName.textContent = data.name;
+            description.textContent = data.weather[0].description;
+            temperature.textContent = `Temperature: ${data.main.temp}°C`;
+            humidity.textContent = `Humidity: ${data.main.humidity}%`;
+            updateBackground(data.weather[0].main);
+        } else {
+            alert('City not found');
+        }
+    }
+
+    function updateBackground(weatherCondition) {
+        const conditions = {
+            Clear: 'sunny.jpg',
+            Clouds: 'cloudy.jpg',
+            Rain: 'rainy.jpg',
+            Snow: 'snowy.jpg',
+            Thunderstorm: 'thunderstorm.jpg',
+            Drizzle: 'drizzle.jpg',
+            Mist: 'mist.jpg'
+        };
+
+        const backgroundImage = conditions[weatherCondition] || 'allweather.jpg';
+        document.body.style.transition = 'background-image 2s ease-in-out';
+        document.body.style.backgroundImage = `url('images/${backgroundImage}')`;
+        // fitting the background image to fit the entire screen and have no repeat and some degree of transparency
+        document.body.style.backgroundSize = 'cover';
+        document.body.style.backgroundRepeat = 'no-repeat';
+        document.body.style.backgroundAttachment = 'fixed';
+        // set background image opacity
+        // load opacity from 0 to 1 slowly animation
+        
+    }
+
+    function fetchWeather(city) {
+        fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.cod === 200) {
+                    cityName.textContent = data.name;
+                    description.textContent = data.weather[0].description;
+                    temperature.textContent = `Temperature: ${data.main.temp}°C`;
+                    humidity.textContent = `Humidity: ${data.main.humidity}%`;
+                    updateBackground(data.weather[0].main);
+                } else {
+                    alert('City not found');
+                }
+            })
+            .catch(error => {
+                alert('Error fetching weather data');
+                console.error(error);
+            });
+    }
+});
+
+    </script>
+</head>
+<body font="Product Sans">
+    <div class="container">
+        <h1>Search Your City</h1>
+        <input type="text" id="city-input" placeholder="Enter city name">
+        <button id="search-button">Get Weather</button>
+        <button id="geolocation-button">Use Your Location</button>
+        <div id="weather-info">
+            <h2 id="city-name"></h2>
+            <p id="description"></p>
+            <p id="temperature"></p>
+            <p id="humidity"></p>
+        </div>
+    </div>
+</body>
+</html>
